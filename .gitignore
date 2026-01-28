@@ -1,0 +1,4 @@
+# Gitignore modula i api keya
+
+node_modules/
+firebase-key.json
