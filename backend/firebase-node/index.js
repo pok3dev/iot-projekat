@@ -1,5 +1,6 @@
 const admin = require("firebase-admin");
 const express = require("express");
+const cors = require("cors");
 
 // Učitaj service account fajl
 const serviceAccount = require("./firebase-key.json");
@@ -14,17 +15,47 @@ const db = admin.database();
 
 const app = express();
 const port = 3000;
+app.use(express.json());
 
-app.get("/led", async (req, res) => {
-  const snapshot = await db.ref("senzor/ledVrijednost").once("value");
-  res.send(`LED value je: ${snapshot.val()}`);
-});
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true); // Postman, server-to-server
 
-app.get("/led/toggle", async (req, res) => {
-  const current = (await db.ref("senzor/ledVrijednost").once("value")).val();
-  const ref = db.ref("senzor/ledVrijednost");
-  await ref.set(current == 1 ? 0 : 1);
-  res.send(`LED value je sada: ${current == 1 ? 0 : 1}`);
+    if (origin === "http://localhost:4200") {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+};
+
+app.use(cors(corsOptions));
+
+let senzori = {
+  temperatura: 23,
+  vlaga: 46,
+  vlaznostTlaProcenat: 53,
+};
+
+// Dohvati temperaturu, vlagu i vlaznost tla
+app.get("/senzori", async (req, res) => {
+  const snapshot = await db.ref("iot").once("value");
+  if (snapshot.exists()) {
+    const data = snapshot.val();
+    senzori.temperatura =
+      data.temperatura > -100 && data.temperatura < 100
+        ? data.temperatura
+        : senzori.temperatura;
+    senzori.vlaga =
+      data.vlaga >= 0 && data.vlaga <= 100 ? data.vlaga : senzori.vlaga;
+    senzori.vlaznostTlaProcenat =
+      data.vlaga >= 0 && data.vlaga <= 100
+        ? data.vlaznostTlaProcenat
+        : senzori.vlaznostTlaProcenat;
+    res.send(senzori);
+  } else {
+    res.send("Nema podataka :/");
+  }
 });
 
 app.listen(port, () => {

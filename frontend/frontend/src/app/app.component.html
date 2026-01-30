@@ -1,0 +1,112 @@
+<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * -->
+<!-- * * * * * * * * * * * The content below * * * * * * * * * * * -->
+<!-- * * * * * * * * * * is only a placeholder * * * * * * * * * * -->
+<!-- * * * * * * * * * * and can be replaced.  * * * * * * * * * * -->
+<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * -->
+<!-- * * * * * * * * * Delete the template below * * * * * * * * * -->
+<!-- * * * * * * * to get started with your project! * * * * * * * -->
+<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * -->
+<style>
+  * {
+    font-family: sans-serif;
+    overflow: hidden;
+  }
+  h1,
+  h2,
+  h3 {
+    font-weight: 400;
+  }
+  .main {
+    margin-top: 10vh;
+    gap: 2rem;
+  }
+  .main__center {
+    gap: 1rem;
+  }
+  .main,
+  .main__center,
+  .slajder {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .slajder div {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .slajder div input:hover {
+    cursor: pointer;
+  }
+
+  p {
+    text-align: center;
+    line-height: 24px;
+  }
+  button {
+    padding: 1rem 2rem;
+    border: none;
+    outline: none;
+    border-radius: 9px;
+  }
+
+  .ukljucena {
+    background-color: red;
+    color: #fff;
+  }
+
+  .iskljucena {
+    background-color: green;
+    color: #fff;
+  }
+
+  button:hover {
+    cursor: pointer;
+  }
+  mat-slider {
+    width: 340px;
+  }
+</style>
+
+<main class="main">
+  <h1>E-Garden</h1>
+
+  <div class="main__center">
+    <h2>Temperatura: {{ temperatura }}°C</h2>
+    <h2>Vlaznost zraka: {{ vlaznostZraka }}%</h2>
+    <h2>Vlaznost tla: {{ vlaznostTla }}%</h2>
+    <div class="slajder">
+      <p>
+        Pumpa se uključuje kada vrijednost <br />
+        vlaznosti tla padne ispod: {{ sliderVrijednost }}%
+      </p>
+      <mat-slider min="0" max="100" step="1">
+        <input
+          matSliderThumb
+          [(ngModel)]="sliderVrijednost"
+          (ngModelChange)="onChange($event)"
+        />
+      </mat-slider>
+      <div>
+        <h3>Omogući automatsko uključivanje</h3>
+        <input type="checkbox" />
+      </div>
+    </div>
+    <button
+      [class.ukljucena]="pumpa()"
+      [class.iskljucena]="!pumpa()"
+      (click)="onClick()"
+    >
+      {{ pumpa() ? "Isključi pumpu" : "Uključi pumpu" }}
+    </button>
+  </div>
+  <p>
+    Konekcija sa uređajem: {{ arduinoKonekcija ? "Povezano" : "Nije povezano" }}
+  </p>
+</main>
+
+<router-outlet />
