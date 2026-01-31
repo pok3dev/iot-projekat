@@ -13,7 +13,7 @@ import { interval, Subscription } from 'rxjs';
 })
 export class AppComponent implements OnInit, OnDestroy {
   private http = inject(HttpClient);
-  private url = 'http://localhost:3000';
+  private url = 'https://iot-projekat-nqvg.onrender.com';
 
   arduinoKonekcija = false;
 
