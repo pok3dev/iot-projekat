@@ -1,5 +1,9 @@
 #include <ESP8266WiFi.h>
 #include <Firebase_ESP_Client.h>
+#include <DHT.h>
+#include "time.h"
+
+const char* ntpServer = "pool.ntp.org";
 
 // WiFi
 #define WIFI_SSID "iSudar"
@@ -17,14 +21,18 @@ FirebaseData fbdo;
 FirebaseAuth auth;
 FirebaseConfig config;
 
-int ledPin = D4;
+#define DHTPIN D2        // Pin za DHT11
+#define DHTTYPE DHT11   // Tip senzora
+
+DHT dht(DHTPIN, DHTTYPE);
+
+const int soilPin = A0; // Analogni pin za soil moisture
 
 unsigned long sendDataPrevMillis = 0;
 
 void setup() {
-   pinMode(ledPin, OUTPUT);
-
-  Serial.begin(115200);
+  Serial.begin(9600);
+  dht.begin();
 
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   Serial.print("Spajanje na WiFi");
@@ -33,6 +41,7 @@ void setup() {
     delay(300);
   }
   Serial.println("\nWiFi spojen");
+  configTime(0, 0, ntpServer); 
 
   config.api_key = API_KEY;
   config.database_url = DATABASE_URL;
@@ -44,29 +53,48 @@ void setup() {
   Firebase.reconnectWiFi(true);
 
   Serial.println("Firebase povezan");
-
-    if (Firebase.RTDB.setInt(&fbdo, "/senzor/ledVrijednost", 1)) {
-      Serial.println("Poslano u Firebase: " + String(1));
-    } else {
-      Serial.println("Greska: " + fbdo.errorReason());
-    }
 }
 
 void loop() {
 
-  if (Firebase.ready() && millis() - sendDataPrevMillis > 2000) {
-    sendDataPrevMillis = millis();
+  if (Firebase.ready() && millis() - sendDataPrevMillis > 3000) {
+      sendDataPrevMillis = millis();
+      // Ping mehanizam 
+      time_t now = time(nullptr);
+      Firebase.RTDB.setInt(&fbdo, "/iot/aktivnostArduina", now);
 
-    // Čitanje nazad
-    int vrijednost = Firebase.RTDB.getInt(&fbdo, "/senzor/ledVrijednost");
-    Serial.println("Procitano iz Firebase: " + String(fbdo.intData()));
-    
-    if(String(fbdo.intData()) == "1") {
-       digitalWrite(ledPin, HIGH);
-    }
-    else {
-      digitalWrite(ledPin, LOW);
-    }
-    
-  }
+      // Čitanje DHT11
+      float temperatura = round(dht.readTemperature());
+      float vlaznostZraka = round(dht.readHumidity());
+
+      // Čitanje vlaznosti tla
+      int vlaznostTla = analogRead(soilPin);
+      Serial.println(temperatura);
+
+      // Pretvaranje vlaznosti tla u procenat
+      int vlaznostTlaProcenat = map(vlaznostTla, 1023, 0, 0, 100);
+      if (isnan(vlaznostZraka) || isnan(temperatura)) {
+        Serial.println("Greska pri citanju DHT11!");
+      }else if (isnan(vlaznostTla)) {
+        Serial.println("Greska pri citanju senzora vlage tla!");
+      }
+       else {
+        Firebase.RTDB.setInt(&fbdo, "/iot/temperatura", temperatura);
+        Firebase.RTDB.setInt(&fbdo, "/iot/vlaga", vlaznostZraka);
+        Firebase.RTDB.setInt(&fbdo, "/iot/vlaznostTlaProcenat", vlaznostTlaProcenat);
+
+        if(Firebase.RTDB.getInt(&fbdo, "/pumpa")){
+          Serial.println("Ukljucena pumpa: "+ String(fbdo.intData()));
+          Serial.println(fbdo.intData());
+          Serial.write(fbdo.intData());
+        }
+
+
+      }
+      }
 }
+
+
+
+
+

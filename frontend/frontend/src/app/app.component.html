@@ -74,36 +74,44 @@
 
 <main class="main">
   <h1>E-Garden</h1>
-
-  <div class="main__center">
-    <h2>Temperatura: {{ temperatura }}°C</h2>
-    <h2>Vlaznost zraka: {{ vlaznostZraka }}%</h2>
-    <h2>Vlaznost tla: {{ vlaznostTla }}%</h2>
-    <div class="slajder">
-      <p>
-        Pumpa se uključuje kada vrijednost <br />
-        vlaznosti tla padne ispod: {{ sliderVrijednost }}%
-      </p>
-      <mat-slider min="0" max="100" step="1">
-        <input
-          matSliderThumb
-          [(ngModel)]="sliderVrijednost"
-          (ngModelChange)="onChange($event)"
-        />
-      </mat-slider>
-      <div>
-        <h3>Omogući automatsko uključivanje</h3>
-        <input type="checkbox" />
+  @if (ucitavanje) {
+    <div>Ucitavanje podataka...</div>
+  }
+  @if (!ucitavanje) {
+    <div class="main__center">
+      <h2>Temperatura: {{ temperatura }}°C</h2>
+      <h2>Vlaznost zraka: {{ vlaznostZraka }}%</h2>
+      <h2>Vlaznost tla: {{ vlaznostTla }}%</h2>
+      <div class="slajder">
+        <p>
+          Pumpa se uključuje kada vrijednost <br />
+          vlaznosti tla padne ispod: {{ sliderVrijednost }}%
+        </p>
+        <mat-slider min="0" max="100" step="1">
+          <input
+            matSliderThumb
+            [(ngModel)]="sliderVrijednost"
+            (ngModelChange)="onChange()"
+          />
+        </mat-slider>
+        <div>
+          <h3>Omogući automatsko uključivanje</h3>
+          <input
+            type="checkbox"
+            (change)="onCheckboxChange()"
+            [(ngModel)]="automatskoUkljucivanje"
+          />
+        </div>
       </div>
+      <button
+        [class.ukljucena]="pumpa()"
+        [class.iskljucena]="!pumpa()"
+        (click)="onClick()"
+      >
+        {{ pumpa() ? "Isključi pumpu" : "Uključi pumpu" }}
+      </button>
     </div>
-    <button
-      [class.ukljucena]="pumpa()"
-      [class.iskljucena]="!pumpa()"
-      (click)="onClick()"
-    >
-      {{ pumpa() ? "Isključi pumpu" : "Uključi pumpu" }}
-    </button>
-  </div>
+  }
   <p>
     Konekcija sa uređajem: {{ arduinoKonekcija ? "Povezano" : "Nije povezano" }}
   </p>

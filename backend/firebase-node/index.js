@@ -21,7 +21,10 @@ const corsOptions = {
   origin: function (origin, callback) {
     if (!origin) return callback(null, true); // Postman, server-to-server
 
-    if (origin === "http://localhost:4200") {
+    if (
+      origin === "http://localhost:4200" ||
+      origin == "https://e-garden-frontend.web.app"
+    ) {
       callback(null, true);
     } else {
       callback(new Error("Not allowed by CORS"));
@@ -32,9 +35,10 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 let senzori = {
-  temperatura: 23,
-  vlaga: 46,
-  vlaznostTlaProcenat: 53,
+  temperatura: 0,
+  vlaga: 0,
+  vlaznostTlaProcenat: 0,
+  aktivnostArduina: 0,
 };
 
 // Dohvati temperaturu, vlagu i vlaznost tla
@@ -52,10 +56,20 @@ app.get("/senzori", async (req, res) => {
       data.vlaga >= 0 && data.vlaga <= 100
         ? data.vlaznostTlaProcenat
         : senzori.vlaznostTlaProcenat;
+    senzori.aktivnostArduina = data.aktivnostArduina;
     res.send(senzori);
   } else {
     res.send("Nema podataka :/");
   }
+});
+
+app.post("/pumpa", async (req, res) => {
+  const pumpa = req.body.pumpa;
+  if (pumpa === 1 || pumpa === 0) {
+    await db.ref("pumpa").set(pumpa);
+    console.log("Stanje pumpe: " + pumpa);
+  }
+  res.send({ message: "Pumpa primljena: ", pumpa });
 });
 
 app.listen(port, () => {
